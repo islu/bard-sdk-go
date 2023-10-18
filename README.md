@@ -27,11 +27,11 @@ package main
 import "github.com/islu/bard-sdk-go/bard"
 
 func main() {
-	bot, err := bard.NewChatbot("BARD_API_KEY")
-	if err != nil {
-		// log.Fatalln(err)
-		return
-	}
+    bot, err := bard.NewChatbot("BARD_API_KEY")
+    if err != nil {
+        // log.Fatalln(err)
+        return
+    }
     response := bot.Ask("your prompt")
 }
 ```
