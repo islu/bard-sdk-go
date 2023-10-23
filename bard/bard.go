@@ -15,46 +15,6 @@ import (
 	"time"
 )
 
-type Chatbot struct {
-	ReqID          int
-	SNlM0e         string
-	ConversationID string
-	ResponseID     string
-	ChoiceID       string
-	Client         *http.Client
-	Sessionid      string
-}
-
-type Response struct {
-	Content           string
-	ConversationID    string
-	ResponseID        string
-	FactualityQueries []interface{}
-	TextQuery         string
-	Choices           []Choice
-}
-
-type Choice struct {
-	ID      string
-	Content string
-}
-
-const HOST = "bard.google.com"
-const Origin_url = "https://" + HOST
-const BASE_URL = "https://" + HOST + "/"
-const ASK_URL = BASE_URL + "_/BardChatUi/data/assistant.lamda.BardFrontendService/StreamGenerate"
-
-func getHeader() http.Header {
-	return http.Header{
-		"Host":          []string{HOST},
-		"X-Same-Domain": []string{"1"},
-		"User-Agent":    []string{"Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36"},
-		"Content-Type":  []string{"application/x-www-form-urlencoded;charset=UTF-8"},
-		"Origin":        []string{Origin_url},
-		"Referer":       []string{BASE_URL},
-	}
-}
-
 // NewChatbot() function returns a chatbot client which can be used to ask questions.
 func NewChatbot(sessionID string) (*Chatbot, error) {
 
@@ -69,45 +29,12 @@ func NewChatbot(sessionID string) (*Chatbot, error) {
 		ResponseID:     "",
 		ChoiceID:       "",
 		Client:         client,
-		Sessionid:      sessionID,
+		SessionID:      sessionID,
 	}
 	chatBot.setCookie()
 	sNlM0e, err := chatBot.getSNlM0e()
 	chatBot.SNlM0e = sNlM0e
 	return chatBot, err
-}
-
-func (chatBot *Chatbot) setCookie() {
-	url, _ := url.Parse(BASE_URL)
-	cookie := &http.Cookie{Name: "__Secure-1PSID", Value: chatBot.Sessionid}
-	chatBot.Client.Jar.SetCookies(url, []*http.Cookie{cookie})
-}
-
-func (c *Chatbot) getSNlM0e() (string, error) {
-	resp, err := c.Client.Get(BASE_URL)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("could not get google bard")
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Println("Failed to read the response body: ", err)
-		return "", err
-	}
-
-	// Convert the response body to a string
-	bodyString := string(body)
-
-	re := regexp.MustCompile(`SNlM0e":"(.*?)"`)
-	match := re.FindStringSubmatch(bodyString)
-	if len(match) < 2 {
-		return "", fmt.Errorf("Init failed, SNlM0e not found")
-	}
-	return match[1], nil
 }
 
 // Ask() function takes the message string and returns Bard response of type bard.Response
@@ -161,4 +88,48 @@ func (c *Chatbot) Ask(message string) (*Response, error) {
 	c.ChoiceID = results.Choices[0].ID
 	c.ReqID += 100000
 	return results, nil
+}
+
+func getHeader() http.Header {
+	return http.Header{
+		"Host":          []string{HOST},
+		"X-Same-Domain": []string{"1"},
+		"User-Agent":    []string{"Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36"},
+		"Content-Type":  []string{"application/x-www-form-urlencoded;charset=UTF-8"},
+		"Origin":        []string{ORIGIN_URL},
+		"Referer":       []string{BASE_URL},
+	}
+}
+
+func (chatBot *Chatbot) setCookie() {
+	url, _ := url.Parse(BASE_URL)
+	cookie := &http.Cookie{Name: "__Secure-1PSID", Value: chatBot.SessionID}
+	chatBot.Client.Jar.SetCookies(url, []*http.Cookie{cookie})
+}
+
+func (c *Chatbot) getSNlM0e() (string, error) {
+	resp, err := c.Client.Get(BASE_URL)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("could not get google bard")
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println("Failed to read the response body: ", err)
+		return "", err
+	}
+
+	// Convert the response body to a string
+	bodyString := string(body)
+
+	re := regexp.MustCompile(`SNlM0e":"(.*?)"`)
+	match := re.FindStringSubmatch(bodyString)
+	if len(match) < 2 {
+		return "", fmt.Errorf("Init failed, SNlM0e not found")
+	}
+	return match[1], nil
 }
