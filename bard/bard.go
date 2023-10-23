@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"math/rand"
 	"net/http"
@@ -117,7 +117,7 @@ func (c *Chatbot) getSNlM0e() (string, error) {
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("could not get google bard")
 	}
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Println("Failed to read the response body: ", err)
 		return "", err
